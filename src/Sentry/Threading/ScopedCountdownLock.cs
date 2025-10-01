@@ -13,7 +13,7 @@ namespace Sentry.Threading;
 internal sealed class ScopedCountdownLock : IDisposable
 {
     private readonly CountdownEvent _event;
-    private volatile int _isEngaged;
+    private volatile bool _isEngaged;
 
     internal ScopedCountdownLock()
     {
@@ -79,7 +79,7 @@ internal sealed class ScopedCountdownLock : IDisposable
     /// </remarks>
     internal LockScope TryEnterLockScope()
     {
-        if (Interlocked.CompareExchange(ref _isEngaged, 1, 0) == 0)
+        if (Interlocked.CompareExchange(ref _isEngaged, true, false) == false)
         {
             Debug.Assert(_event.CurrentCount >= 1);
             _ = _event.Signal(); // decrement the initial count of 1, so that the event can be set with the count reaching 0 when all entered 'CounterScope' instances have exited
@@ -94,7 +94,7 @@ internal sealed class ScopedCountdownLock : IDisposable
         Debug.Assert(_event.IsSet);
         _event.Reset(); // reset the signaled event to the initial count of 1, so that new 'CounterScope' instances can be entered again
 
-        if (Interlocked.CompareExchange(ref _isEngaged, 0, 1) != 1)
+        if (Interlocked.CompareExchange(ref _isEngaged, false, true) != true)
         {
             Debug.Fail("The Lock should have not been disengaged without being engaged first.");
         }

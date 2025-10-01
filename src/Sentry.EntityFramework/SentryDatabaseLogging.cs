@@ -5,14 +5,14 @@ namespace Sentry.EntityFramework;
 /// </summary>
 internal static class SentryDatabaseLogging
 {
-    private static int Init;
+    private static bool _init;
 
     internal static SentryCommandInterceptor? UseBreadcrumbs(
         IQueryLogger? queryLogger = null,
         bool initOnce = true,
         IDiagnosticLogger? diagnosticLogger = null)
     {
-        if (initOnce && Interlocked.Exchange(ref Init, 1) != 0)
+        if (initOnce && Interlocked.Exchange(ref _init, true) != false)
         {
             diagnosticLogger?.LogWarning("{0}.{1} was already executed.",
                 nameof(SentryDatabaseLogging), nameof(UseBreadcrumbs));
